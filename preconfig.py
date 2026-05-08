@@ -8,7 +8,7 @@ st.markdown("Gunakan portal ini untuk men-generate script konfigurasi perangkat 
 st.markdown("---")
 
 # Pilihan Utama
-tipe_switch = st.selectbox("Pilih Vendor Perangkat (Switch)", ["Raisecom", "BDCOM", "Fiberhome"])
+tipe_switch = st.selectbox("Pilih Vendor Perangkat (Switch)", ["Raisecom", "BDCOM", "Fiberhome", "Huawei S2700"])
 ada_mikrotik = st.radio("Apakah ada perangkat Mikrotik Pelanggan setelah Switch ini?", ["Tidak", "Ya"], horizontal=True)
 
 st.markdown("---")
@@ -39,10 +39,8 @@ if tipe_switch == "Raisecom":
         
         desc_ge9 = st.text_input("Deskripsi ge 1/0/9 (Arah POP / Trunk Uplink)", placeholder="Contoh: trunk to pop SBT-GI.RENGAT")
         
-        # TOMBOL SUBMIT DI DALAM FORM
         submit_raisecom = st.form_submit_button("🔧 Generate Script Raisecom", use_container_width=True)
 
-    # LOGIKA & HASIL DIKELUARKAN DARI FORM (DI SINI KUNCI PERBAIKANNYA)
     if submit_raisecom:
         if not (hostname and vlan_nms and vlan_service and desc_vlan_service and ip_vlan_nms and ip_route_static and desc_ge1 and desc_ge9):
             st.error("Semua parameter wajib diisi!")
@@ -71,12 +69,10 @@ if tipe_switch == "Raisecom":
             script += f"int ge 1/0/9\ndescription {desc_ge9}\nport link-type trunk\nport trunk allow-pass vlan {vlan_trunk_pop}\nexit\n"
             script += f"save running-config"
 
-            # Simpan ke memori (Session State)
             st.session_state['script_aktif'] = script
             st.session_state['file_aktif'] = f"Preconfig_Raisecom_{hostname}.txt"
             st.session_state['vendor_aktif'] = "Raisecom"
 
-    # MENAMPILKAN HASIL JIKA VENDOR SAMA
     if st.session_state.get('vendor_aktif') == "Raisecom" and 'script_aktif' in st.session_state:
         st.success("✅ Script berhasil di-generate! Silakan copy kode di bawah ini:")
         st.code(st.session_state['script_aktif'], language='bash')
@@ -211,7 +207,6 @@ elif tipe_switch == "Fiberhome":
             script += f"interface gi 1/0/9\nalias \"{desc_ge9}\"\nport link-type trunk\nport trunk allow-pass vlan {vlan_trunk_pop}\nexit\n\n"
             script += f"ip route-static 0.0.0.0 0.0.0.0 {ip_route_static}\n\n"
             
-            # BAGIAN KONFIGURASI GLOBAL
             tambahan_fiberhome = f"""end
 
 header login "============================================================%. This system is the property of PT Indonesia Comnets Plus .%============================================================%"
@@ -263,6 +258,99 @@ y"""
         
         st.download_button(
             label="📥 Download Preconfig Fiberhome (.txt)",
+            data=st.session_state['script_aktif'],
+            file_name=st.session_state['file_aktif'],
+            mime="text/plain",
+            use_container_width=True
+        )
+
+# ==========================================
+# 4. HUAWEI S2700 (FITUR BARU)
+# ==========================================
+elif tipe_switch == "Huawei S2700":
+    st.subheader("⚙️ Parameter Huawei S2700")
+    with st.form("form_huawei"):
+        hostname = st.text_input("Hostname", placeholder="Contoh: SBT-INDOMARCO.T54O-HUAWEI.S2700-CPE-01")
+        
+        col1, col2, col3 = st.columns(3)
+        vlan_nms = col1.text_input("VLAN NMS", placeholder="Contoh: 13")
+        vlan_service = col2.text_input("VLAN Service", placeholder="Contoh: 2807")
+        desc_vlan_service = col3.text_input("Deskripsi VLAN Service", placeholder="Contoh: IBBC")
+        
+        col4, col5 = st.columns(2)
+        ip_vlan_nms = col4.text_input("IP Address & Mask VLAN NMS", placeholder="Contoh: 172.28.184.251 255.255.255.248")
+        ip_route_static = col5.text_input("IP Route Static (Gateway)", placeholder="Contoh: 172.28.184.249")
+        
+        st.markdown("**Deskripsi Interface**")
+        desc_e1 = st.text_input("Deskripsi Ethernet 0/0/1 (Arah Pelanggan)", placeholder="Contoh: 221405000034 ICL Indomarco")
+        
+        desc_e2 = ""
+        if ada_mikrotik == "Ya":
+            desc_e2 = st.text_input("Deskripsi Ethernet 0/0/2 (Trunk ke Mikrotik)", placeholder="Contoh: Trunk to Mikrotik")
+        
+        desc_ge1 = st.text_input("Deskripsi GigabitEthernet 0/0/1 (Arah POP / Trunk Uplink)", placeholder="Contoh: trunk to SBT-ULP.BANGKINANG...")
+        
+        submit_huawei = st.form_submit_button("🔧 Generate Script Huawei S2700", use_container_width=True)
+
+    if submit_huawei:
+        if not (hostname and vlan_nms and vlan_service and desc_vlan_service and ip_vlan_nms and ip_route_static and desc_e1 and desc_ge1):
+            st.error("Semua parameter wajib diisi!")
+        elif ada_mikrotik == "Ya" and not desc_e2:
+            st.error("Deskripsi Ethernet 0/0/2 wajib diisi karena menggunakan Mikrotik!")
+        else:
+            script = f"system-view\n"
+            script += f"sysname {hostname}\n"
+            script += f"vlan {vlan_nms}\ndescription NMS\nquit\n"
+            script += f"vlan {vlan_service}\ndescription {desc_vlan_service}\nquit\n"
+            
+            if ada_mikrotik == "Ya":
+                script += f"vlan 1132\ndescription nms.ms\nquit\n"
+                
+            script += f"int vlanif {vlan_nms}\n"
+            script += f"ip address {ip_vlan_nms}\n"
+            script += f"undo shutdown\nquit\n"
+            script += f"ip route-static 0.0.0.0 0.0.0.0 {ip_route_static}\n"
+            
+            script += f"interface Ethernet 0/0/1\n"
+            script += f"description {desc_e1}\n"
+            script += f"port link-type access\n"
+            script += f"port default vlan {vlan_service}\nquit\n"
+            
+            if ada_mikrotik == "Ya":
+                script += f"interface Ethernet 0/0/2\n"
+                script += f"description {desc_e2}\n"
+                script += f"port link-type trunk\n"
+                # Di Huawei, antar VLAN di-allow pakai spasi
+                script += f"port trunk allow-pass vlan {vlan_nms} {vlan_service} 1132\nquit\n"
+                vlan_trunk_pop = f"1 {vlan_nms} {vlan_service} 1132"
+            else:
+                vlan_trunk_pop = f"1 {vlan_nms} {vlan_service}"
+                
+            script += f"interface GigabitEthernet 0/0/1\n"
+            script += f"description {desc_ge1}\n"
+            script += f"port link-type trunk\n"
+            script += f"port trunk allow-pass vlan {vlan_trunk_pop}\nquit\n"
+            
+            # Script AAA dan VTY statik dari template Huawei
+            script += f"aaa\nlocal-user j2m password cipher multimedia123\n"
+            script += f"local-user j2m privilege level 15\n"
+            script += f"local-user j2m service-type telnet ssh\nquit\n\n"
+            
+            script += f"user-interface vty 0 4\n"
+            script += f" authentication-mode aaa\n"
+            script += f" user privilege level 15\n"
+            script += f" idle-timeout 30 0\n"
+
+            st.session_state['script_aktif'] = script
+            st.session_state['file_aktif'] = f"Preconfig_Huawei_{hostname}.txt"
+            st.session_state['vendor_aktif'] = "Huawei"
+
+    if st.session_state.get('vendor_aktif') == "Huawei" and 'script_aktif' in st.session_state:
+        st.success("✅ Script berhasil di-generate! Silakan copy kode di bawah ini:")
+        st.code(st.session_state['script_aktif'], language='bash')
+        
+        st.download_button(
+            label="📥 Download Preconfig Huawei S2700 (.txt)",
             data=st.session_state['script_aktif'],
             file_name=st.session_state['file_aktif'],
             mime="text/plain",
