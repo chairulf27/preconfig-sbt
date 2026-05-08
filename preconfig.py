@@ -8,7 +8,7 @@ st.markdown("Gunakan portal ini untuk men-generate script konfigurasi perangkat 
 st.markdown("---")
 
 # Pilihan Utama
-tipe_switch = st.selectbox("Pilih Vendor Perangkat (Switch)", ["Raisecom", "BDCOM", "Fiberhome", "Huawei S2700"])
+tipe_switch = st.selectbox("Pilih Vendor Perangkat (Switch)", ["Raisecom", "BDCOM", "Fiberhome", "Huawei S2700", "H3C"])
 ada_mikrotik = st.radio("Apakah ada perangkat Mikrotik Pelanggan setelah Switch ini?", ["Tidak", "Ya"], horizontal=True)
 
 st.markdown("---")
@@ -265,7 +265,7 @@ y"""
         )
 
 # ==========================================
-# 4. HUAWEI S2700 (FITUR BARU)
+# 4. HUAWEI S2700
 # ==========================================
 elif tipe_switch == "Huawei S2700":
     st.subheader("⚙️ Parameter Huawei S2700")
@@ -320,7 +320,6 @@ elif tipe_switch == "Huawei S2700":
                 script += f"interface Ethernet 0/0/2\n"
                 script += f"description {desc_e2}\n"
                 script += f"port link-type trunk\n"
-                # Di Huawei, antar VLAN di-allow pakai spasi
                 script += f"port trunk allow-pass vlan {vlan_nms} {vlan_service} 1132\nquit\n"
                 vlan_trunk_pop = f"1 {vlan_nms} {vlan_service} 1132"
             else:
@@ -331,7 +330,6 @@ elif tipe_switch == "Huawei S2700":
             script += f"port link-type trunk\n"
             script += f"port trunk allow-pass vlan {vlan_trunk_pop}\nquit\n"
             
-            # Script AAA dan VTY statik dari template Huawei
             script += f"aaa\nlocal-user j2m password cipher multimedia123\n"
             script += f"local-user j2m privilege level 15\n"
             script += f"local-user j2m service-type telnet ssh\nquit\n\n"
@@ -351,6 +349,139 @@ elif tipe_switch == "Huawei S2700":
         
         st.download_button(
             label="📥 Download Preconfig Huawei S2700 (.txt)",
+            data=st.session_state['script_aktif'],
+            file_name=st.session_state['file_aktif'],
+            mime="text/plain",
+            use_container_width=True
+        )
+
+# ==========================================
+# 5. H3C (FITUR BARU)
+# ==========================================
+elif tipe_switch == "H3C":
+    st.subheader("⚙️ Parameter H3C")
+    with st.form("form_h3c"):
+        hostname = st.text_input("Hostname", placeholder="Contoh: SBT-KLINIK.RS.SEMEN.PADANG-H3C-CPE-01")
+        
+        col1, col2, col3 = st.columns(3)
+        vlan_nms = col1.text_input("VLAN NMS", placeholder="Contoh: 13")
+        vlan_service = col2.text_input("VLAN Service", placeholder="Contoh: 2810")
+        desc_vlan_service = col3.text_input("Deskripsi VLAN Service", placeholder="Contoh: METRO")
+        
+        col4, col5 = st.columns(2)
+        ip_vlan_nms = col4.text_input("IP Address & Mask VLAN NMS", placeholder="Contoh: 172.28.163.69 255.255.255.224")
+        ip_route_static = col5.text_input("IP Route Static (Gateway)", placeholder="Contoh: 172.28.163.65")
+        
+        st.markdown("**Deskripsi Interface**")
+        desc_ge5 = st.text_input("Deskripsi GigabitEthernet1/0/5 (Arah Pelanggan)", placeholder="Contoh: IBBC Klinik RS Semen Padang")
+        
+        desc_ge6 = ""
+        if ada_mikrotik == "Ya":
+            desc_ge6 = st.text_input("Deskripsi GigabitEthernet1/0/6 (Trunk ke Mikrotik)", placeholder="Contoh: Trunk to Mikrotik")
+        
+        desc_ge9 = st.text_input("Deskripsi GigabitEthernet1/0/9 (Arah POP / Trunk Uplink)", placeholder="Contoh: Trunk to SBT-PLN.RKR.ULP...")
+        
+        submit_h3c = st.form_submit_button("🔧 Generate Script H3C", use_container_width=True)
+
+    if submit_h3c:
+        if not (hostname and vlan_nms and vlan_service and desc_vlan_service and ip_vlan_nms and ip_route_static and desc_ge5 and desc_ge9):
+            st.error("Semua parameter wajib diisi!")
+        elif ada_mikrotik == "Ya" and not desc_ge6:
+            st.error("Deskripsi GigabitEthernet1/0/6 wajib diisi karena menggunakan Mikrotik!")
+        else:
+            script = f"system-view\n"
+            script += f"sysname {hostname}\n#\n"
+            
+            script += f"vlan 1\n#\n"
+            script += f"vlan {vlan_nms}\n name NMS\n#\n"
+            script += f"vlan {vlan_service}\n name {desc_vlan_service}\n#\n"
+            
+            if ada_mikrotik == "Ya":
+                script += f"vlan 1132\n name nms.ms\n#\n"
+                
+            script += f"interface Vlan-interface{vlan_nms}\n"
+            script += f" ip address {ip_vlan_nms}\n#\n"
+            
+            script += f"interface GigabitEthernet1/0/5\n"
+            script += f" description {desc_ge5}\n"
+            script += f" port link-type access\n"
+            script += f" port access vlan {vlan_service}\n#\n"
+            
+            if ada_mikrotik == "Ya":
+                script += f"interface GigabitEthernet1/0/6\n"
+                script += f" description {desc_ge6}\n"
+                script += f" port link-type trunk\n"
+                script += f" port trunk permit vlan 1 {vlan_nms} {vlan_service} 1132\n#\n"
+                vlan_trunk_pop = f"1 {vlan_nms} {vlan_service} 1132"
+            else:
+                vlan_trunk_pop = f"1 {vlan_nms} {vlan_service}"
+                
+            script += f"interface GigabitEthernet1/0/9\n"
+            script += f" description {desc_ge9}\n"
+            script += f" port link-type trunk\n"
+            script += f" port trunk permit vlan {vlan_trunk_pop}\n#\n"
+            
+            script += f"ip route-static 0.0.0.0 0 {ip_route_static}\n#\n"
+            
+            # Konfigurasi bawaan sistem H3C sesuai request
+            tambahan_h3c = """telnet server enable
+#
+ irf mac-address persistent timer
+ irf auto-update enable
+ undo irf link-delay
+ irf member 1 priority 1
+#
+ lldp global enable
+#
+ password-recovery enable
+#
+ stp global enable
+#
+line class aux
+ user-role network-admin
+#
+line class vty
+ user-role network-operator
+#
+line aux 0
+ user-role network-admin
+#
+line vty 0 4
+ authentication-mode scheme
+ user-role network-admin
+ user-role network-operator
+#
+line vty 5 63
+ user-role network-operator
+#
+radius scheme system
+ user-name-format without-domain
+#
+domain system
+#
+ domain default enable system
+#
+user-group system
+#
+local-user j2m class manage
+ password hash $h$6$qCbH5KEAFHjIk85L$OLqloKuHN0clUKgrVZOG8bAJTS0iM3pqwirAPfsn3A5HWCCYLzEOhn6kVwgOQkpRXemPC2slULYslik6oygDpg==
+ service-type telnet
+ authorization-attribute user-role network-admin
+ authorization-attribute user-role network-operator
+#
+return"""
+            script += tambahan_h3c
+
+            st.session_state['script_aktif'] = script
+            st.session_state['file_aktif'] = f"Preconfig_H3C_{hostname}.txt"
+            st.session_state['vendor_aktif'] = "H3C"
+
+    if st.session_state.get('vendor_aktif') == "H3C" and 'script_aktif' in st.session_state:
+        st.success("✅ Script berhasil di-generate! Silakan copy kode di bawah ini:")
+        st.code(st.session_state['script_aktif'], language='bash')
+        
+        st.download_button(
+            label="📥 Download Preconfig H3C (.txt)",
             data=st.session_state['script_aktif'],
             file_name=st.session_state['file_aktif'],
             mime="text/plain",
