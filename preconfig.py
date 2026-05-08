@@ -39,45 +39,55 @@ if tipe_switch == "Raisecom":
         
         desc_ge9 = st.text_input("Deskripsi ge 1/0/9 (Arah POP / Trunk Uplink)", placeholder="Contoh: trunk to pop SBT-GI.RENGAT")
         
-        if st.form_submit_button("🔧 Generate Script Raisecom", use_container_width=True):
-            if not (hostname and vlan_nms and vlan_service and desc_vlan_service and ip_vlan_nms and ip_route_static and desc_ge1 and desc_ge9):
-                st.error("Semua parameter wajib diisi!")
-            elif ada_mikrotik == "Ya" and not desc_ge2:
-                st.error("Deskripsi ge 1/0/2 wajib diisi karena menggunakan Mikrotik!")
-            else:
-                script = f"config\nhostname {hostname}\n"
-                script += f"vlan {vlan_nms}\ndescription NMS\nexit\n"
-                script += f"vlan {vlan_service}\ndescription {desc_vlan_service}\nexit\n"
-                
-                if ada_mikrotik == "Ya":
-                    script += f"vlan 1132\ndescription nms.ms\nexit\n"
-                    
-                script += f"interface vlan {vlan_nms}\nip address {ip_vlan_nms}\nexit\n"
-                script += f"ip route-static 0.0.0.0 0.0.0.0 {ip_route_static}\n"
-                script += f"username plniconplussumbagteng password plain ic0nplusSumbagt3ng group administrators\n"
-                
-                script += f"int ge 1/0/1\ndescription {desc_ge1}\nport link-type access\nport default vlan {vlan_service}\nexit\n"
-                
-                if ada_mikrotik == "Ya":
-                    script += f"int ge 1/0/2\ndescription {desc_ge2}\nport link-type trunk\nport trunk allow-pass vlan {vlan_nms},{vlan_service},1132\nexit\n"
-                    vlan_trunk_pop = f"{vlan_nms},{vlan_service},1132"
-                else:
-                    vlan_trunk_pop = f"{vlan_nms},{vlan_service}"
-                    
-                script += f"int ge 1/0/9\ndescription {desc_ge9}\nport link-type trunk\nport trunk allow-pass vlan {vlan_trunk_pop}\nexit\n"
-                script += f"save running-config"
+        # TOMBOL SUBMIT DI DALAM FORM
+        submit_raisecom = st.form_submit_button("🔧 Generate Script Raisecom", use_container_width=True)
 
-                st.success("✅ Script berhasil di-generate! Silakan copy kode di bawah ini:")
-                st.code(script, language='bash')
+    # LOGIKA & HASIL DIKELUARKAN DARI FORM (DI SINI KUNCI PERBAIKANNYA)
+    if submit_raisecom:
+        if not (hostname and vlan_nms and vlan_service and desc_vlan_service and ip_vlan_nms and ip_route_static and desc_ge1 and desc_ge9):
+            st.error("Semua parameter wajib diisi!")
+        elif ada_mikrotik == "Ya" and not desc_ge2:
+            st.error("Deskripsi ge 1/0/2 wajib diisi karena menggunakan Mikrotik!")
+        else:
+            script = f"config\nhostname {hostname}\n"
+            script += f"vlan {vlan_nms}\ndescription NMS\nexit\n"
+            script += f"vlan {vlan_service}\ndescription {desc_vlan_service}\nexit\n"
+            
+            if ada_mikrotik == "Ya":
+                script += f"vlan 1132\ndescription nms.ms\nexit\n"
                 
-                # FITUR BARU: TOMBOL DOWNLOAD TXT
-                st.download_button(
-                    label="📥 Download Preconfig Raisecom (.txt)",
-                    data=script,
-                    file_name=f"Preconfig_Raisecom_{hostname}.txt",
-                    mime="text/plain",
-                    use_container_width=True
-                )
+            script += f"interface vlan {vlan_nms}\nip address {ip_vlan_nms}\nexit\n"
+            script += f"ip route-static 0.0.0.0 0.0.0.0 {ip_route_static}\n"
+            script += f"username plniconplussumbagteng password plain ic0nplusSumbagt3ng group administrators\n"
+            
+            script += f"int ge 1/0/1\ndescription {desc_ge1}\nport link-type access\nport default vlan {vlan_service}\nexit\n"
+            
+            if ada_mikrotik == "Ya":
+                script += f"int ge 1/0/2\ndescription {desc_ge2}\nport link-type trunk\nport trunk allow-pass vlan {vlan_nms},{vlan_service},1132\nexit\n"
+                vlan_trunk_pop = f"{vlan_nms},{vlan_service},1132"
+            else:
+                vlan_trunk_pop = f"{vlan_nms},{vlan_service}"
+                
+            script += f"int ge 1/0/9\ndescription {desc_ge9}\nport link-type trunk\nport trunk allow-pass vlan {vlan_trunk_pop}\nexit\n"
+            script += f"save running-config"
+
+            # Simpan ke memori (Session State)
+            st.session_state['script_aktif'] = script
+            st.session_state['file_aktif'] = f"Preconfig_Raisecom_{hostname}.txt"
+            st.session_state['vendor_aktif'] = "Raisecom"
+
+    # MENAMPILKAN HASIL JIKA VENDOR SAMA
+    if st.session_state.get('vendor_aktif') == "Raisecom" and 'script_aktif' in st.session_state:
+        st.success("✅ Script berhasil di-generate! Silakan copy kode di bawah ini:")
+        st.code(st.session_state['script_aktif'], language='bash')
+        
+        st.download_button(
+            label="📥 Download Preconfig Raisecom (.txt)",
+            data=st.session_state['script_aktif'],
+            file_name=st.session_state['file_aktif'],
+            mime="text/plain",
+            use_container_width=True
+        )
 
 # ==========================================
 # 2. BDCOM
@@ -105,42 +115,48 @@ elif tipe_switch == "BDCOM":
         
         desc_ge9 = st.text_input("Deskripsi gigaEthernet 0/9 (Arah POP / Trunk Uplink)", placeholder="Contoh: trunk to SBT-PASIR.PANGARAIAN")
         
-        if st.form_submit_button("🔧 Generate Script BDCOM", use_container_width=True):
-            if not (hostname and vlan_nms and vlan_service and desc_vlan_service and ip_vlan_nms and ip_route_default and desc_ge1 and desc_ge9):
-                st.error("Semua parameter wajib diisi!")
-            elif ada_mikrotik == "Ya" and not desc_ge2:
-                st.error("Deskripsi gigaEthernet 0/2 wajib diisi karena menggunakan Mikrotik!")
-            else:
-                script = f"enable\nconfig \nhostname {hostname}\n"
-                script += f"username plniconplussumbagteng password ic0nplusSumbagt3ng\n"
-                script += f"vlan {vlan_nms}\nname NMS\nexit\n"
-                script += f"vlan {vlan_service}\nname {desc_vlan_service}\nexit\n"
-                
-                if ada_mikrotik == "Ya":
-                    script += f"vlan 1132\nname nms.ms\nexit\n"
-                    
-                script += f"interface vlan {vlan_nms}\nip address {ip_vlan_nms}\nexit \n"
-                script += f"ip route default {ip_route_default} \n"
-                
-                script += f"interface gigaEthernet 0/1\ndescription {desc_ge1}\nswitchport mode access\nswitchport pvid {vlan_service}\nexit\n"
-                
-                if ada_mikrotik == "Ya":
-                    script += f"interface gigaEthernet 0/2\ndescription {desc_ge2}\nswitchport mode trunk\nexit\n"
-                    
-                script += f"interface gigaEthernet 0/9\ndescription {desc_ge9}\nswitchport mode trunk\nexit\n"
-                script += f"exit \nwrite"
+        submit_bdcom = st.form_submit_button("🔧 Generate Script BDCOM", use_container_width=True)
 
-                st.success("✅ Script berhasil di-generate! Silakan copy kode di bawah ini:")
-                st.code(script, language='bash')
+    if submit_bdcom:
+        if not (hostname and vlan_nms and vlan_service and desc_vlan_service and ip_vlan_nms and ip_route_default and desc_ge1 and desc_ge9):
+            st.error("Semua parameter wajib diisi!")
+        elif ada_mikrotik == "Ya" and not desc_ge2:
+            st.error("Deskripsi gigaEthernet 0/2 wajib diisi karena menggunakan Mikrotik!")
+        else:
+            script = f"enable\nconfig \nhostname {hostname}\n"
+            script += f"username plniconplussumbagteng password ic0nplusSumbagt3ng\n"
+            script += f"vlan {vlan_nms}\nname NMS\nexit\n"
+            script += f"vlan {vlan_service}\nname {desc_vlan_service}\nexit\n"
+            
+            if ada_mikrotik == "Ya":
+                script += f"vlan 1132\nname nms.ms\nexit\n"
                 
-                # FITUR BARU: TOMBOL DOWNLOAD TXT
-                st.download_button(
-                    label="📥 Download Preconfig BDCOM (.txt)",
-                    data=script,
-                    file_name=f"Preconfig_BDCOM_{hostname}.txt",
-                    mime="text/plain",
-                    use_container_width=True
-                )
+            script += f"interface vlan {vlan_nms}\nip address {ip_vlan_nms}\nexit \n"
+            script += f"ip route default {ip_route_default} \n"
+            
+            script += f"interface gigaEthernet 0/1\ndescription {desc_ge1}\nswitchport mode access\nswitchport pvid {vlan_service}\nexit\n"
+            
+            if ada_mikrotik == "Ya":
+                script += f"interface gigaEthernet 0/2\ndescription {desc_ge2}\nswitchport mode trunk\nexit\n"
+                
+            script += f"interface gigaEthernet 0/9\ndescription {desc_ge9}\nswitchport mode trunk\nexit\n"
+            script += f"exit \nwrite"
+
+            st.session_state['script_aktif'] = script
+            st.session_state['file_aktif'] = f"Preconfig_BDCOM_{hostname}.txt"
+            st.session_state['vendor_aktif'] = "BDCOM"
+
+    if st.session_state.get('vendor_aktif') == "BDCOM" and 'script_aktif' in st.session_state:
+        st.success("✅ Script berhasil di-generate! Silakan copy kode di bawah ini:")
+        st.code(st.session_state['script_aktif'], language='bash')
+        
+        st.download_button(
+            label="📥 Download Preconfig BDCOM (.txt)",
+            data=st.session_state['script_aktif'],
+            file_name=st.session_state['file_aktif'],
+            mime="text/plain",
+            use_container_width=True
+        )
 
 # ==========================================
 # 3. FIBERHOME
@@ -168,33 +184,35 @@ elif tipe_switch == "Fiberhome":
         
         desc_ge9 = st.text_input("Alias gi 1/0/9 (Arah POP / Trunk Uplink)", placeholder="Contoh: SBT-PLN.RAYONSIMPANGTIGA Port9")
         
-        if st.form_submit_button("🔧 Generate Script Fiberhome", use_container_width=True):
-            if not (hostname and vlan_nms and vlan_service and desc_vlan_service and ip_vlan_nms and ip_route_static and desc_ge1 and desc_ge9):
-                st.error("Semua parameter wajib diisi!")
-            elif ada_mikrotik == "Ya" and not desc_ge2:
-                st.error("Alias gi 1/0/2 wajib diisi karena menggunakan Mikrotik!")
+        submit_fiberhome = st.form_submit_button("🔧 Generate Script Fiberhome", use_container_width=True)
+
+    if submit_fiberhome:
+        if not (hostname and vlan_nms and vlan_service and desc_vlan_service and ip_vlan_nms and ip_route_static and desc_ge1 and desc_ge9):
+            st.error("Semua parameter wajib diisi!")
+        elif ada_mikrotik == "Ya" and not desc_ge2:
+            st.error("Alias gi 1/0/2 wajib diisi karena menggunakan Mikrotik!")
+        else:
+            script = f"config\nhostname {hostname}\n"
+            script += f"vlan {vlan_nms}\nalias NMS\nexit\n"
+            script += f"vlan {vlan_service}\nalias {desc_vlan_service}\nexit\n"
+            
+            if ada_mikrotik == "Ya":
+                script += f"vlan 1132\nalias nms.ms\nexit\n"
+                
+            script += f"interface vlan {vlan_nms}\nip address {ip_vlan_nms}\nexit\n"
+            script += f"interface gi 1/0/1\nalias \"{desc_ge1}\"\nport link-type access\nport default vlan {vlan_service}\nexit\n"
+            
+            if ada_mikrotik == "Ya":
+                script += f"interface gi 1/0/2\nalias \"{desc_ge2}\"\nport link-type trunk\nport trunk allow-pass vlan {vlan_nms},{vlan_service},1132\nexit\n"
+                vlan_trunk_pop = f"{vlan_nms},{vlan_service},1132"
             else:
-                script = f"config\nhostname {hostname}\n"
-                script += f"vlan {vlan_nms}\nalias NMS\nexit\n"
-                script += f"vlan {vlan_service}\nalias {desc_vlan_service}\nexit\n"
+                vlan_trunk_pop = f"{vlan_nms},{vlan_service}"
                 
-                if ada_mikrotik == "Ya":
-                    script += f"vlan 1132\nalias nms.ms\nexit\n"
-                    
-                script += f"interface vlan {vlan_nms}\nip address {ip_vlan_nms}\nexit\n"
-                script += f"interface gi 1/0/1\nalias \"{desc_ge1}\"\nport link-type access\nport default vlan {vlan_service}\nexit\n"
-                
-                if ada_mikrotik == "Ya":
-                    script += f"interface gi 1/0/2\nalias \"{desc_ge2}\"\nport link-type trunk\nport trunk allow-pass vlan {vlan_nms},{vlan_service},1132\nexit\n"
-                    vlan_trunk_pop = f"{vlan_nms},{vlan_service},1132"
-                else:
-                    vlan_trunk_pop = f"{vlan_nms},{vlan_service}"
-                    
-                script += f"interface gi 1/0/9\nalias \"{desc_ge9}\"\nport link-type trunk\nport trunk allow-pass vlan {vlan_trunk_pop}\nexit\n\n"
-                script += f"ip route-static 0.0.0.0 0.0.0.0 {ip_route_static}\n\n"
-                
-                # BAGIAN KONFIGURASI GLOBAL
-                tambahan_fiberhome = f"""end
+            script += f"interface gi 1/0/9\nalias \"{desc_ge9}\"\nport link-type trunk\nport trunk allow-pass vlan {vlan_trunk_pop}\nexit\n\n"
+            script += f"ip route-static 0.0.0.0 0.0.0.0 {ip_route_static}\n\n"
+            
+            # BAGIAN KONFIGURASI GLOBAL
+            tambahan_fiberhome = f"""end
 
 header login "============================================================%. This system is the property of PT Indonesia Comnets Plus .%============================================================%"
 
@@ -233,16 +251,20 @@ sshd
 exit
 wr file
 y"""
-                script += tambahan_fiberhome
+            script += tambahan_fiberhome
 
-                st.success("✅ Script berhasil di-generate! Silakan copy kode di bawah ini:")
-                st.code(script, language='bash')
-                
-                # FITUR BARU: TOMBOL DOWNLOAD TXT
-                st.download_button(
-                    label="📥 Download Preconfig Fiberhome (.txt)",
-                    data=script,
-                    file_name=f"Preconfig_Fiberhome_{hostname}.txt",
-                    mime="text/plain",
-                    use_container_width=True
-                )
+            st.session_state['script_aktif'] = script
+            st.session_state['file_aktif'] = f"Preconfig_Fiberhome_{hostname}.txt"
+            st.session_state['vendor_aktif'] = "Fiberhome"
+
+    if st.session_state.get('vendor_aktif') == "Fiberhome" and 'script_aktif' in st.session_state:
+        st.success("✅ Script berhasil di-generate! Silakan copy kode di bawah ini:")
+        st.code(st.session_state['script_aktif'], language='bash')
+        
+        st.download_button(
+            label="📥 Download Preconfig Fiberhome (.txt)",
+            data=st.session_state['script_aktif'],
+            file_name=st.session_state['file_aktif'],
+            mime="text/plain",
+            use_container_width=True
+        )
