@@ -69,6 +69,15 @@ if tipe_switch == "Raisecom":
 
                 st.success("✅ Script berhasil di-generate! Silakan copy kode di bawah ini:")
                 st.code(script, language='bash')
+                
+                # FITUR BARU: TOMBOL DOWNLOAD TXT
+                st.download_button(
+                    label="📥 Download Preconfig Raisecom (.txt)",
+                    data=script,
+                    file_name=f"Preconfig_Raisecom_{hostname}.txt",
+                    mime="text/plain",
+                    use_container_width=True
+                )
 
 # ==========================================
 # 2. BDCOM
@@ -123,6 +132,15 @@ elif tipe_switch == "BDCOM":
 
                 st.success("✅ Script berhasil di-generate! Silakan copy kode di bawah ini:")
                 st.code(script, language='bash')
+                
+                # FITUR BARU: TOMBOL DOWNLOAD TXT
+                st.download_button(
+                    label="📥 Download Preconfig BDCOM (.txt)",
+                    data=script,
+                    file_name=f"Preconfig_BDCOM_{hostname}.txt",
+                    mime="text/plain",
+                    use_container_width=True
+                )
 
 # ==========================================
 # 3. FIBERHOME
@@ -179,8 +197,8 @@ elif tipe_switch == "Fiberhome":
                 tambahan_fiberhome = f"""end
 
 header login "============================================================%. This system is the property of PT Indonesia Comnets Plus .%============================================================%"
- 
- username plniconplussumbagteng group administrators password ic0nplusSumbagt3ng 
+
+username plniconplussumbagteng group administrators password ic0nplusSumbagt3ng 
 aaa
  tacacs-server server1 ip-address 10.14.4.19 key iC0N-IPmpls+
  tacacs-server server2 ip-address 10.14.4.12 key iC0N-IPmpls+
@@ -192,7 +210,7 @@ aaa
  aaa authorization method otorisasi2 server-group grup2
  aaa account login method akunt1 server-group grup1
  aaa account login method akunt2 server-group grup2
- 
+
 line console 1
  timeout 5 0
 line vty 1 5
@@ -203,7 +221,7 @@ line vty 1 5
 ntp
  ntp unicast-server 10.14.4.2
  ntp unicast-server 10.14.4.23
- 
+
 snmp version all
 snmp location {hostname}
 snmp community IPMPLS-ICON+ rw
@@ -219,3 +237,12 @@ y"""
 
                 st.success("✅ Script berhasil di-generate! Silakan copy kode di bawah ini:")
                 st.code(script, language='bash')
+                
+                # FITUR BARU: TOMBOL DOWNLOAD TXT
+                st.download_button(
+                    label="📥 Download Preconfig Fiberhome (.txt)",
+                    data=script,
+                    file_name=f"Preconfig_Fiberhome_{hostname}.txt",
+                    mime="text/plain",
+                    use_container_width=True
+                )
