@@ -9,11 +9,14 @@ st.set_page_config(page_title="SWIGEN", layout="centered", page_icon="⚡")
 col_logo, col_judul = st.columns([1, 5])
 with col_logo:
     try:
-        # Menampilkan gambar logo. Pastikan nama file di komputermu adalah logo.jpg
-        st.image("logo.jpg", use_container_width=True) 
+        # Menggunakan alamat lengkap (Absolute Path) dengan garis miring (/)
+        st.image("F:/Aplikasi monitoring/logo.jpg", use_container_width=True) 
     except:
-        st.error("Logo tidak ditemukan")
-
+        try:
+            # Jika ternyata ekstensinya .jpeg (karena beda format bawaan HP/kamera)
+            st.image("F:/Aplikasi monitoring/logo.jpeg", use_container_width=True)
+        except:
+            st.error("Logo tidak ditemukan")
 with col_judul:
     st.title("⚡ SWIGEN")
     st.subheader("Auto-Generator Preconfig Switch")
