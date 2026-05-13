@@ -6,24 +6,27 @@ import os
 # ==========================================
 st.set_page_config(page_title="SWIGEN", layout="centered", page_icon="⚡")
 
-# MENDETEKSI LOKASI FOLDER SECARA OTOMATIS
+# MENDETEKSI LOKASI LOKAL & MENCARI FILE LOGO SECARA OTOMATIS
 lokasi_script = os.path.dirname(os.path.abspath(__file__))
-lokasi_logo = os.path.join(lokasi_script, "logo.jpg")
+file_logo = None
+
+# Python akan menyapu folder dan mencari file yang namanya berawalan "logo"
+try:
+    for file in os.listdir(lokasi_script):
+        if file.lower().startswith("logo."):
+            file_logo = os.path.join(lokasi_script, file)
+            break
+except:
+    pass
 
 # MEMBUAT LOGO BERSAMPINGAN DENGAN JUDUL
 col_logo, col_judul = st.columns([1, 5])
 with col_logo:
-    # Mengecek apakah file fotonya benar-benar ada di lokasi tersebut
-    if os.path.exists(lokasi_logo):
-        st.image(lokasi_logo, use_container_width=True) 
+    if file_logo and os.path.exists(file_logo):
+        st.image(file_logo, use_container_width=True) 
     else:
-        # Jika .jpg tidak ketemu, coba cari .jpeg (bawaan Windows/HP)
-        lokasi_logo_jpeg = os.path.join(lokasi_script, "logo.jpeg")
-        if os.path.exists(lokasi_logo_jpeg):
-            st.image(lokasi_logo_jpeg, use_container_width=True)
-        else:
-            st.error("Logo gagal dimuat.")
-            st.info(f"Sistem mencoba mencari di: {lokasi_logo}")
+        st.error("Logo tidak ditemukan.")
+        st.info("Pastikan file gambar sudah diberi nama 'logo' dan disimpan di folder yang sama.")
 
 with col_judul:
     st.title("⚡ SWIGEN")
@@ -32,7 +35,7 @@ with col_judul:
 st.markdown("Portal otomatisasi *script* konfigurasi perangkat distribusi (Raisecom, BDCOM, Fiberhome, Huawei S2700, H3C) agar lebih *sat-set* dan bebas *typo*.")
 st.markdown("---")
 
-# ... (Kode Pilihan Vendor Utama di bawahnya tetap sama) ...
+# ... (Kode Pilihan Vendor Utama di bawahnya biarkan tetap sama) ...
 
 # ==========================================
 # PILIHAN VENDOR UTAMA
