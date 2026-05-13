@@ -5,7 +5,7 @@ import streamlit as st
 # ==========================================
 st.set_page_config(page_title="SWIGEN", layout="centered", page_icon="⚡")
 
-st.title("⚡ SWIGEN")
+st.title("⚡ SWIGEN (SWITCH GENERATOR)")
 st.subheader("Auto-Generator Preconfig Switch")
 st.markdown("Portal otomatisasi *script* konfigurasi perangkat distribusi (Raisecom, BDCOM, Fiberhome, Huawei S2700, H3C) agar lebih *sat-set* dan bebas *typo*.")
 st.markdown("---")
