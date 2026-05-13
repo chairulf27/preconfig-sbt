@@ -1,28 +1,38 @@
 import streamlit as st
+import os
 
 # ==========================================
 # KONFIGURASI HALAMAN & NAMA SISTEM BARU
 # ==========================================
 st.set_page_config(page_title="SWIGEN", layout="centered", page_icon="⚡")
 
+# MENDETEKSI LOKASI FOLDER SECARA OTOMATIS
+lokasi_script = os.path.dirname(os.path.abspath(__file__))
+lokasi_logo = os.path.join(lokasi_script, "logo.jpg")
+
 # MEMBUAT LOGO BERSAMPINGAN DENGAN JUDUL
 col_logo, col_judul = st.columns([1, 5])
 with col_logo:
-    try:
-        # Menggunakan alamat lengkap (Absolute Path) dengan garis miring (/)
-        st.image("F:/Aplikasi monitoring/logo.jpg", use_container_width=True) 
-    except:
-        try:
-            # Jika ternyata ekstensinya .jpeg (karena beda format bawaan HP/kamera)
-            st.image("F:/Aplikasi monitoring/logo.jpeg", use_container_width=True)
-        except:
-            st.error("Logo tidak ditemukan")
+    # Mengecek apakah file fotonya benar-benar ada di lokasi tersebut
+    if os.path.exists(lokasi_logo):
+        st.image(lokasi_logo, use_container_width=True) 
+    else:
+        # Jika .jpg tidak ketemu, coba cari .jpeg (bawaan Windows/HP)
+        lokasi_logo_jpeg = os.path.join(lokasi_script, "logo.jpeg")
+        if os.path.exists(lokasi_logo_jpeg):
+            st.image(lokasi_logo_jpeg, use_container_width=True)
+        else:
+            st.error("Logo gagal dimuat.")
+            st.info(f"Sistem mencoba mencari di: {lokasi_logo}")
+
 with col_judul:
     st.title("⚡ SWIGEN")
     st.subheader("Auto-Generator Preconfig Switch")
 
 st.markdown("Portal otomatisasi *script* konfigurasi perangkat distribusi (Raisecom, BDCOM, Fiberhome, Huawei S2700, H3C) agar lebih *sat-set* dan bebas *typo*.")
 st.markdown("---")
+
+# ... (Kode Pilihan Vendor Utama di bawahnya tetap sama) ...
 
 # ==========================================
 # PILIHAN VENDOR UTAMA
