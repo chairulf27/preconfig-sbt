@@ -1,13 +1,29 @@
 import streamlit as st
 
-# Konfigurasi Halaman
-st.set_page_config(page_title="Auto Preconfig Switch", layout="centered", page_icon="⚡")
+# ==========================================
+# KONFIGURASI HALAMAN & NAMA SISTEM BARU
+# ==========================================
+st.set_page_config(page_title="SWIGEN", layout="centered", page_icon="⚡")
 
-st.title("⚡ Auto-Generator Preconfig Switch")
-st.markdown("Gunakan portal ini untuk men-generate script konfigurasi perangkat distribusi secara otomatis dan bebas *typo*.")
+# MEMBUAT LOGO BERSAMPINGAN DENGAN JUDUL
+col_logo, col_judul = st.columns([1, 5])
+with col_logo:
+    try:
+        # Menampilkan gambar logo. Pastikan nama file di komputermu adalah logo.jpg
+        st.image("logo.jpg", use_container_width=True) 
+    except:
+        st.error("Logo tidak ditemukan")
+
+with col_judul:
+    st.title("⚡ SWIGEN")
+    st.subheader("Auto-Generator Preconfig Switch")
+
+st.markdown("Portal otomatisasi *script* konfigurasi perangkat distribusi (Raisecom, BDCOM, Fiberhome, Huawei S2700, H3C) agar lebih *sat-set* dan bebas *typo*.")
 st.markdown("---")
 
-# Pilihan Utama
+# ==========================================
+# PILIHAN VENDOR UTAMA
+# ==========================================
 tipe_switch = st.selectbox("Pilih Vendor Perangkat (Switch)", ["Raisecom", "BDCOM", "Fiberhome", "Huawei S2700", "H3C"])
 ada_mikrotik = st.radio("Apakah ada perangkat Mikrotik Pelanggan setelah Switch ini?", ["Tidak", "Ya"], horizontal=True)
 
@@ -356,7 +372,7 @@ elif tipe_switch == "Huawei S2700":
         )
 
 # ==========================================
-# 5. H3C (FITUR BARU)
+# 5. H3C
 # ==========================================
 elif tipe_switch == "H3C":
     st.subheader("⚙️ Parameter H3C")
@@ -423,7 +439,6 @@ elif tipe_switch == "H3C":
             
             script += f"ip route-static 0.0.0.0 0 {ip_route_static}\n#\n"
             
-            # Konfigurasi bawaan sistem H3C sesuai request
             tambahan_h3c = """telnet server enable
 #
  irf mac-address persistent timer
