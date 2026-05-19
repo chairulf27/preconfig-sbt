@@ -5,24 +5,27 @@ import streamlit as st
 # ==========================================
 st.set_page_config(page_title="SWIGEN", layout="centered", page_icon="⚡")
 
-st.title("⚡ SWIGEN (SWITCH GENERATOR)")
+st.title("⚡ SWIGEN")
 st.subheader("Auto-Generator Preconfig Switch")
-st.markdown("Portal otomatisasi *script* konfigurasi perangkat distribusi (Raisecom, BDCOM, Fiberhome, Huawei S2700, H3C) agar lebih *sat-set* dan bebas *typo*.")
+st.markdown("Portal otomatisasi *script* konfigurasi perangkat distribusi agar lebih *sat-set* dan bebas *typo*.")
 st.markdown("---")
 
 # ==========================================
 # PILIHAN VENDOR UTAMA
 # ==========================================
-tipe_switch = st.selectbox("Pilih Vendor Perangkat (Switch)", ["Raisecom", "BDCOM", "Fiberhome", "Huawei S2700", "H3C"])
+tipe_switch = st.selectbox(
+    "Pilih Vendor Perangkat (Switch)", 
+    ["Raisecom (Lama)", "Raisecom ISCOM2600-12G-AC", "BDCOM", "Fiberhome", "Huawei S2700", "H3C"]
+)
 ada_mikrotik = st.radio("Apakah ada perangkat Mikrotik Pelanggan setelah Switch ini?", ["Tidak", "Ya"], horizontal=True)
 
 st.markdown("---")
 
 # ==========================================
-# 1. RAISECOM
+# 1. RAISECOM (LAMA)
 # ==========================================
-if tipe_switch == "Raisecom":
-    st.subheader("⚙️ Parameter Raisecom")
+if tipe_switch == "Raisecom (Lama)":
+    st.subheader("⚙️ Parameter Raisecom (Lama)")
     with st.form("form_raisecom"):
         hostname = st.text_input("Hostname", placeholder="Contoh: SBT-INDOMARCO.TGPN-ISCOM2600-CPE-01")
         
@@ -44,7 +47,7 @@ if tipe_switch == "Raisecom":
         
         desc_ge9 = st.text_input("Deskripsi ge 1/0/9 (Arah POP / Trunk Uplink)", placeholder="Contoh: trunk to pop SBT-GI.RENGAT")
         
-        submit_raisecom = st.form_submit_button("🔧 Generate Script Raisecom", use_container_width=True)
+        submit_raisecom = st.form_submit_button("🔧 Generate Script Raisecom Lama", use_container_width=True)
 
     if submit_raisecom:
         if not (hostname and vlan_nms and vlan_service and desc_vlan_service and ip_vlan_nms and ip_route_static and desc_ge1 and desc_ge9):
@@ -75,15 +78,14 @@ if tipe_switch == "Raisecom":
             script += f"save running-config"
 
             st.session_state['script_aktif'] = script
-            st.session_state['file_aktif'] = f"Preconfig_Raisecom_{hostname}.txt"
-            st.session_state['vendor_aktif'] = "Raisecom"
+            st.session_state['file_aktif'] = f"Preconfig_Raisecom_Lama_{hostname}.txt"
+            st.session_state['vendor_aktif'] = "Raisecom Lama"
 
-    if st.session_state.get('vendor_aktif') == "Raisecom" and 'script_aktif' in st.session_state:
+    if st.session_state.get('vendor_aktif') == "Raisecom Lama" and 'script_aktif' in st.session_state:
         st.success("✅ Script berhasil di-generate! Silakan copy kode di bawah ini:")
         st.code(st.session_state['script_aktif'], language='bash')
-        
         st.download_button(
-            label="📥 Download Preconfig Raisecom (.txt)",
+            label="📥 Download Preconfig Raisecom Lama (.txt)",
             data=st.session_state['script_aktif'],
             file_name=st.session_state['file_aktif'],
             mime="text/plain",
@@ -91,7 +93,78 @@ if tipe_switch == "Raisecom":
         )
 
 # ==========================================
-# 2. BDCOM
+# 2. RAISECOM ISCOM2600-12G-AC (FITUR BARU)
+# ==========================================
+elif tipe_switch == "Raisecom ISCOM2600-12G-AC":
+    st.subheader("⚙️ Parameter Raisecom ISCOM2600-12G-AC")
+    with st.form("form_raisecom_baru"):
+        hostname = st.text_input("Hostname", placeholder="Contoh: SBT-INDOMARCO.TI6Z.SUKARNOHATTA-ISCOM2600-CPE-01")
+        
+        col1, col2, col3 = st.columns(3)
+        vlan_nms = col1.text_input("VLAN NMS", placeholder="Contoh: 13")
+        vlan_service = col2.text_input("VLAN Service", placeholder="Contoh: 2882")
+        desc_vlan_service = col3.text_input("Nama VLAN Service", placeholder="Contoh: IBBC")
+        
+        col4, col5 = st.columns(2)
+        ip_vlan_nms = col4.text_input("IP Address & Mask VLAN NMS", placeholder="Contoh: 172.31.99.254 255.255.255.252")
+        ip_route_static = col5.text_input("IP Route Static (Gateway)", placeholder="Contoh: 172.31.99.253")
+        
+        st.markdown("**Deskripsi Interface**")
+        desc_ge1 = st.text_input("Deskripsi gi 1/1/1 (Arah Pelanggan)", placeholder="Contoh: 111405003855 IBBC Indomarco TI6Z")
+        
+        desc_ge2 = ""
+        if ada_mikrotik == "Ya":
+            desc_ge2 = st.text_input("Deskripsi gi 1/1/2 (Trunk ke Mikrotik)", placeholder="Contoh: Trunk to Mikrotik Pelanggan")
+        
+        desc_ge9 = st.text_input("Deskripsi gi 1/1/9 (Arah POP / Trunk Uplink)", placeholder="Contoh: trunk to PoP SBT-ICON-PEKANBARU...")
+        
+        submit_raisecom_baru = st.form_submit_button("🔧 Generate Script Raisecom ISCOM2600", use_container_width=True)
+
+    if submit_raisecom_baru:
+        if not (hostname and vlan_nms and vlan_service and desc_vlan_service and ip_vlan_nms and ip_route_static and desc_ge1 and desc_ge9):
+            st.error("Semua parameter wajib diisi!")
+        elif ada_mikrotik == "Ya" and not desc_ge2:
+            st.error("Deskripsi gi 1/1/2 wajib diisi karena menggunakan Mikrotik!")
+        else:
+            script = f"user name plniconplussumbagteng password cipher $@!!b739611ce027cc159db8746a69630bff confirm\n"
+            script += f"hostname {hostname}\nconfig\n"
+            script += f"vlan {vlan_nms}\nname nms\nexit\n"
+            script += f"vlan {vlan_service}\nname {desc_vlan_service}\nexit\n"
+            
+            if ada_mikrotik == "Ya":
+                script += f"vlan 1132\nname nms.ms\nexit\n"
+                
+            script += f"interface vlan {vlan_nms}\nip address {ip_vlan_nms}\nexit\n"
+            script += f"ip route 0.0.0.0 0.0.0.0 {ip_route_static}\n"
+            
+            script += f"interface gi 1/1/1 \ndescription \"{desc_ge1}\"\nswitchport mode access\nswitchport access vlan {vlan_service}\nexit\n"
+            
+            if ada_mikrotik == "Ya":
+                script += f"interface gi 1/1/2\ndescription \"{desc_ge2}\"\nswitchport mode trunk\nswitchport trunk allowed vlan {vlan_nms},{vlan_service},1132 confirm\nexit\n"
+                vlan_trunk_pop = f"{vlan_nms},{vlan_service},1132"
+            else:
+                vlan_trunk_pop = f"{vlan_nms},{vlan_service}"
+                
+            script += f"interface gi 1/1/9\ndescription \"{desc_ge9}\"\nswitchport trunk allowed vlan {vlan_trunk_pop} confirm\nswitchport mode trunk\nexit\n"
+            script += f"write\n"
+
+            st.session_state['script_aktif'] = script
+            st.session_state['file_aktif'] = f"Preconfig_Raisecom_12G_AC_{hostname}.txt"
+            st.session_state['vendor_aktif'] = "Raisecom ISCOM2600-12G-AC"
+
+    if st.session_state.get('vendor_aktif') == "Raisecom ISCOM2600-12G-AC" and 'script_aktif' in st.session_state:
+        st.success("✅ Script berhasil di-generate! Silakan copy kode di bawah ini:")
+        st.code(st.session_state['script_aktif'], language='bash')
+        st.download_button(
+            label="📥 Download Preconfig Raisecom ISCOM2600-12G-AC (.txt)",
+            data=st.session_state['script_aktif'],
+            file_name=st.session_state['file_aktif'],
+            mime="text/plain",
+            use_container_width=True
+        )
+
+# ==========================================
+# 3. BDCOM
 # ==========================================
 elif tipe_switch == "BDCOM":
     st.subheader("⚙️ Parameter BDCOM")
@@ -150,7 +223,6 @@ elif tipe_switch == "BDCOM":
     if st.session_state.get('vendor_aktif') == "BDCOM" and 'script_aktif' in st.session_state:
         st.success("✅ Script berhasil di-generate! Silakan copy kode di bawah ini:")
         st.code(st.session_state['script_aktif'], language='bash')
-        
         st.download_button(
             label="📥 Download Preconfig BDCOM (.txt)",
             data=st.session_state['script_aktif'],
@@ -160,7 +232,7 @@ elif tipe_switch == "BDCOM":
         )
 
 # ==========================================
-# 3. FIBERHOME
+# 4. FIBERHOME
 # ==========================================
 elif tipe_switch == "Fiberhome":
     st.subheader("⚙️ Parameter Fiberhome")
@@ -260,7 +332,6 @@ y"""
     if st.session_state.get('vendor_aktif') == "Fiberhome" and 'script_aktif' in st.session_state:
         st.success("✅ Script berhasil di-generate! Silakan copy kode di bawah ini:")
         st.code(st.session_state['script_aktif'], language='bash')
-        
         st.download_button(
             label="📥 Download Preconfig Fiberhome (.txt)",
             data=st.session_state['script_aktif'],
@@ -270,7 +341,7 @@ y"""
         )
 
 # ==========================================
-# 4. HUAWEI S2700
+# 5. HUAWEI S2700
 # ==========================================
 elif tipe_switch == "Huawei S2700":
     st.subheader("⚙️ Parameter Huawei S2700")
@@ -351,7 +422,6 @@ elif tipe_switch == "Huawei S2700":
     if st.session_state.get('vendor_aktif') == "Huawei" and 'script_aktif' in st.session_state:
         st.success("✅ Script berhasil di-generate! Silakan copy kode di bawah ini:")
         st.code(st.session_state['script_aktif'], language='bash')
-        
         st.download_button(
             label="📥 Download Preconfig Huawei S2700 (.txt)",
             data=st.session_state['script_aktif'],
@@ -361,7 +431,7 @@ elif tipe_switch == "Huawei S2700":
         )
 
 # ==========================================
-# 5. H3C
+# 6. H3C
 # ==========================================
 elif tipe_switch == "H3C":
     st.subheader("⚙️ Parameter H3C")
@@ -483,7 +553,6 @@ return"""
     if st.session_state.get('vendor_aktif') == "H3C" and 'script_aktif' in st.session_state:
         st.success("✅ Script berhasil di-generate! Silakan copy kode di bawah ini:")
         st.code(st.session_state['script_aktif'], language='bash')
-        
         st.download_button(
             label="📥 Download Preconfig H3C (.txt)",
             data=st.session_state['script_aktif'],
